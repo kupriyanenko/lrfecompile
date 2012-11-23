@@ -1,0 +1,37 @@
+{
+  "name": "lrfecompile",
+  "version": "0.0.1",
+  "description": "tool for automatic precompile frontend on liferay",
+  "preferGlobal": "true",
+  "main": "index",
+  "bin": {
+    "lrfecompile": "bin/lrfecompile"
+  },
+  "author": {
+    "name": "Alexey Kupriyanenko",
+    "email": "a.kupriyanenko@gmail.com",
+    "url": "http://lifeprom.com"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/mit-license.php"
+    }
+  ],
+  "keywords": [
+    "liferay"
+  ],
+  "repository" : {
+    "type": "git",
+    "url": "https://github.com/kupriyanenko/lrfecompile.git"
+  },
+  "dependencies": {
+    "commander": "1.0.x",
+    "walk": "2.2.x",
+    "fs-watch-tree": "0.2.x",
+    "path": "0.4.x"
+  },
+  "engines": {
+    "node": ">= 0.6.x"
+  }
+}
