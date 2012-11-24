@@ -19,109 +19,104 @@ config =
   changed:
     theme: {}
     portlet: {}
-    extension: {}
+    extension: {}  
 
-copyFile = (oldFile, newFile) ->
+class Watcher
   ###
-  Copy file from old directory to new derictory
+  Watcher base class
   ###
-  printName = newFile
-  newFile = fs.createWriteStream newFile
-  oldFile = fs.createReadStream oldFile
+  constructor: (rootDir, toCopyDir, silence = false) ->
+    @rootDir = path.join options.root, rootDir
+    @toCopyDir = path.join options.tomcat, toCopyDir
 
-  oldFile.addListener "data", (chunk) ->
-    newFile.write chunk
+    console.log "start watch folder #{@rootDir}" if not silence
 
-  oldFile.addListener "close", ->
-    newFile.end()
-    console.log 'update', printName
+  copyFile: (oldFile, newFile) ->
+    ### Copy file from old directory to new derictory ###
+    printName = newFile
+    newFile = fs.createWriteStream newFile
+    oldFile = fs.createReadStream oldFile
 
-watchPortlet = ->
+    oldFile.addListener "data", (chunk) ->
+      newFile.write chunk
+
+    oldFile.addListener "close", ->
+      newFile.end()
+      console.log 'update', printName
+
+class portletWatcher extends Watcher
   ###
   Watch changes files in portlets
   ###
-  rootDir = path.join options.root, './portlets'
-  toCopyDir = path.join options.tomcat, './webapps'
+  init: ->
+    for portlet in fs.readdirSync @rootDir when fs.statSync(path.join @rootDir, portlet).isDirectory()
+      watchTree path.join(@rootDir, portlet, 'docroot'), {exclude: ['WEB-INF']}, (event) =>
+        sep = if path.sep is '\\' then '\\\\' else path.sep
+        regexName = new RegExp "^(.*?)portlets#{sep}(.*?)#{sep}(.*?)$", 'gi'
+        portletName = path.dirname(event.name).replace(regexName, "$2")
+        
+        regexPath = new RegExp "^(.*?)portlets#{sep}#{portletName}#{sep}docroot#{sep}(.*?)$", 'gi'
+        folderPath = path.dirname(event.name).replace(regexPath, "$2")
+        toCopyFile = path.join @toCopyDir, portletName, folderPath, path.basename(event.name)
 
-  console.log "start watch folder #{rootDir}"
+        @copyFile event.name, toCopyFile
 
-  for portlet in fs.readdirSync rootDir when fs.statSync(path.join rootDir, name).isDirectory()
-    watchTree path.join(rootDir, portlet, 'docroot'), {exclude: ['WEB-INF']}, (event) ->
-      sep = if path.sep is '\\' then '\\\\' else path.sep
-      regexName = new RegExp "^(.*?)portlets#{sep}(.*?)#{sep}(.*?)$", 'gi'
-      portletName = path.dirname(event.name).replace(regexName, "$2")
-      
-      regexPath = new RegExp "^(.*?)portlets#{sep}#{portletName}#{sep}docroot#{sep}(.*?)$", 'gi'
-      folderPath = path.dirname(event.name).replace(regexPath, "$2")
-      toCopyFile = path.join toCopyDir, portletName, folderPath, path.basename(event.name)
-
-      copyFile event.name, toCopyFile
-
-watchExtension = ->
+class extensionWatcher extends Watcher
   ###
   Watch changes files in extensions
   ###
-  rootDir = path.join options.root, './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html'
-  toCopyDir = path.join options.tomcat, './webapps/ROOT/html'
+  init: ->
+    watchTree @rootDir, (event) =>
+      regexPath = new RegExp '^(.*?)html(.*?)$', 'gi'
+      folderPath = event.name.replace regexPath, "$2"
+      toCopyFile = path.join @toCopyDir, folderPath
 
-  console.log "start watch folder #{rootDir}"
+      @copyFile event.name, toCopyFile
 
-  watchTree rootDir, (event) ->
-    regexPath = new RegExp '^(.*?)html(.*?)$', 'gi'
-    folderPath = event.name.replace regexPath, "$2"
-    toCopyFile = path.join toCopyDir, folderPath
-
-    copyFile event.name, toCopyFile
-
-watchTheme = ->
+class themeWatcher extends Watcher
   ###
   Watch changes files in themes
   ###
-  rootDir = path.join options.root, './themes'
-  toCopyDir = path.join options.tomcat, './webapps'
-  themeList = []
+  init: ->
+    @themeList = @getThemeList()
 
-  themeList = (name for name in fs.readdirSync rootDir when fs.statSync(path.join rootDir, name).isDirectory())
+    for theme in @themeList
+      pathTheme = if theme isnt 'core' then 'docroot/_diffs' else ''
+      console.log "start watch folder #{path.join @rootDir, theme, pathTheme}"
+      @createWatcher path.join(@rootDir, theme, pathTheme), theme
 
-  copyToThemes = (pathFile, folder, theme) ->
-    ###
-    Copy file to themes
-    ###
+  getThemeList: ->
+    theme for theme in fs.readdirSync @rootDir when fs.statSync(path.join @rootDir, theme).isDirectory()
+
+  copyToThemes: (pathFile, folder, theme) ->
+    ### Copy file to themes ###
     if theme is 'core'
-      for themeName in themeList
-        if themeName is 'core'
-          continue
+      for themeName in @themeList
+        continue if themeName is 'core'
 
-        if pathFile.slice(path.sep).indexOf('portlets') isnt -1
-          toCopyFile = path.join toCopyDir, themeName, folder, 'portlets', path.basename pathFile
-          themeFile = path.join rootDir, themeName, 'docroot/_diffs', folder, 'portlets', path.basename pathFile
+        if 'portlets' in pathFile.slice(path.sep)
+          toCopyFile = path.join @toCopyDir, themeName, folder, 'portlets', path.basename pathFile
+          themeFile = path.join @rootDir, themeName, 'docroot/_diffs', folder, 'portlets', path.basename pathFile
         else
-          toCopyFile = path.join toCopyDir, themeName, folder, path.basename pathFile
-          themeFile = path.join rootDir, themeName, 'docroot/_diffs', folder, path.basename pathFile
+          toCopyFile = path.join @toCopyDir, themeName, folder, path.basename pathFile
+          themeFile = path.join @rootDir, themeName, 'docroot/_diffs', folder, path.basename pathFile
 
-        copyFile pathFile, toCopyFile if not fs.existsSync themeFile
+        @copyFile pathFile, toCopyFile if not fs.existsSync themeFile
     else
-      toCopyFile = path.join toCopyDir, theme, folder, path.basename pathFile
-      copyFile pathFile, toCopyFile
+      toCopyFile = path.join @toCopyDir, theme, folder, path.basename pathFile
+      @copyFile pathFile, toCopyFile
 
-  createWatcher = (root, theme) ->
-    ###
-    Create watcher for theme
-    ###
-    watchTree root, (event) ->
-      if ['.css', '.scss'].indexOf(path.extname event.name) isnt -1
+  createWatcher: (root, theme) ->
+    ### Create watcher for theme ###
+    watchTree root, (event) =>
+      if path.extname(event.name) in ['.css', '.scss']
         folder = 'css'
-      else if ['.js', '.json'].indexOf(path.extname event.name) isnt -1
+      else if path.extname(event.name) in ['.js', '.json']
         folder = 'js'
-      else if ['.vm'].indexOf(path.extname event.name) isnt -1
+      else if path.extname(event.name) in ['.vm']
         folder = 'templates'
 
-      copyToThemes event.name, folder, theme if folder
-
-  for theme in themeList
-    pathTheme = if theme isnt 'core' then 'docroot/_diffs' else ''
-    console.log "start watch folder #{path.join rootDir, theme, pathTheme}"
-    createWatcher path.join(rootDir, theme, pathTheme), theme
+      @copyToThemes event.name, folder, theme if folder
 
 createProxy = ->
   ###
@@ -147,14 +142,17 @@ createProxy = ->
 
     request.on 'data', chunk ->
       proxy.write chunk, 'binary'
-
     request.on 'end', ->
       proxy.end()
 
   server.listen options.proxyport
 
-# Init
-watchPortlet()
-watchExtension()
-watchTheme()
+portlets = new portletWatcher './portlets', './webapps'
+extensions = new extensionWatcher './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html', './webapps/ROOT/html'
+themes = new themeWatcher './themes', './webapps', true
+
+portlets.init()
+extensions.init()
+themes.init()
+
 createProxy()
