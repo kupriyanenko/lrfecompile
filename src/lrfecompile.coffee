@@ -7,10 +7,10 @@ watchTree = require('fs-watch-tree').watchTree
 
 options
   .version('0.0.1')
-  .option('-t, --tomcat <n>', 'tomcat folder')
-  .option('-r, --root <n>', 'plugins folder', '.')
-  .option('-l, --liferayport <n>', 'liferay port', 8080)
-  .option('-p, --proxyport <n>', 'liferay port', 8000)
+  .option('-t, --tomcat <n>', 'tomcat root folder')
+  .option('-r, --root <n>', 'plugins root folder, defaul .', '.')
+  .option('-l, --liferayport <n>', 'liferay port, defaul 8080', 8080)
+  .option('-p, --proxyport <n>', 'liferay port, defaul 8000', 8000)
   .parse(process.argv)
 
 options.help() if not options.tomcat
@@ -140,17 +140,17 @@ createProxy = (proxyport, liferayport) ->
   Create proxy server
   ###
   server = http.createServer (request, response) ->
-    portletsList = portlets.getPortletList()
-    themesList = themes.getThemeList()
+    portletList = portlets.getPortletList()
+    themeList = themes.getThemeList()
 
     getType = (url) ->
       ### Get file type (portlet, theme, extension) ###
-      url = url.split(path.sep)
+      url = url.split path.sep
 
       for segment in url
-        if segment in portletsList
+        if segment in portletList
           return 'portlet'
-        else if segment in themesList
+        else if segment in themeList
           return 'theme'
         else if segment is 'html'
           return 'extension'
@@ -158,25 +158,28 @@ createProxy = (proxyport, liferayport) ->
     getName = (url, type) ->
       ### Get name for cached file ###
       if type is 'theme'
-        return segment for segment in url.split(path.sep) when segment in themesList
+        return segment for segment in url.split(path.sep) when segment in themeList
       else
-        path.basename(url)
+        path.basename url
 
-    hash = (url) ->
+    getPath = ->
       ### Get hash for url ###
-      url = url.substring 0, index if (index = url.indexOf('?')) >= 0
+      url = if (index = request.url.indexOf('?')) >= 0 then request.url.substring 0, index else request.url
       type = getType url
-      name = getName url, type
 
       if type
+        name = getName url, type
         stamp = changed[type][name] ? changed[type][name] = new Date().getTime()
-        if index >= 0 then "&proxy=#{stamp}" else "?proxy=#{stamp}"
+        hash = if index >= 0 then "&proxy_hash=#{stamp}" else "?proxy_hash=#{stamp}"
+        request.url + hash
+      else
+        request.url
 
     config =
       port: liferayport,
       host: request.host,
       method: request.method,
-      path: if hash request.url then request.url + hash request.url else request.url,
+      path: getPath(),
       headers: request.headers
 
     proxy = http.request config, (res) ->
