@@ -134,7 +134,7 @@ class ThemeWatcher extends Watcher
       if 'portlets' in pathFile.split path.sep
         toCopyFile = path.join @toCopyDir, theme, folder, 'portlets', path.basename pathFile
       else
-          toCopyFile = path.join @toCopyDir, themeName, folder, path.basename pathFile
+        toCopyFile = path.join @toCopyDir, theme, folder, path.basename pathFile
       @copyFile pathFile, toCopyFile 
       @updateChanged theme
 
