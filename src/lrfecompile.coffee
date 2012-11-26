@@ -10,7 +10,7 @@ options
   .option('-t, --tomcat <n>', 'tomcat root folder')
   .option('-r, --root <n>', 'plugins root folder, defaul .', '.')
   .option('-l, --liferayport <n>', 'liferay port, defaul 8080', 8080)
-  .option('-p, --proxyport <n>', 'liferay port, defaul 8000', 8000)
+  .option('-p, --proxyport <n>', 'proxy port, defaul 8000', 8000)
   .parse(process.argv)
 
 options.help() if not options.tomcat
@@ -174,6 +174,8 @@ createProxy = (proxyport, liferayport) ->
         request.url + hash
       else
         request.url
+
+    request.headers["Content-Type"] = "text/json"
 
     config =
       port: liferayport,
