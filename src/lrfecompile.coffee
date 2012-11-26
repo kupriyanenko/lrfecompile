@@ -174,7 +174,6 @@ createProxy = (proxyport, liferayport) ->
         name = getName url, type
         stamp = changed[type][name] ? changed[type][name] = new Date().getTime()
         hash = if index >= 0 then "&proxy_hash=#{stamp}" else "?proxy_hash=#{stamp}"
-        console.log hash
         request.url + hash
       else
         request.url
