@@ -131,7 +131,10 @@ class ThemeWatcher extends Watcher
           @copyFile pathFile, toCopyFile 
           @updateChanged themeName
     else
-      toCopyFile = path.join @toCopyDir, theme, folder, path.basename pathFile
+      if 'portlets' in pathFile.split path.sep
+        toCopyFile = path.join @toCopyDir, theme, folder, 'portlets', path.basename pathFile
+      else
+          toCopyFile = path.join @toCopyDir, themeName, folder, path.basename pathFile
       @copyFile pathFile, toCopyFile 
       @updateChanged theme
 
@@ -145,7 +148,7 @@ createProxy = (proxyport, liferayport) ->
 
     getType = (url) ->
       ### Get file type (portlet, theme, extension) ###
-      url = url.split path.sep
+      url = url.split '/'
 
       for segment in url
         if segment in portletList
@@ -158,7 +161,7 @@ createProxy = (proxyport, liferayport) ->
     getName = (url, type) ->
       ### Get name for cached file ###
       if type is 'theme'
-        return segment for segment in url.split(path.sep) when segment in themeList
+        return segment for segment in url.split('/') when segment in themeList
       else
         path.basename url
 
@@ -171,6 +174,7 @@ createProxy = (proxyport, liferayport) ->
         name = getName url, type
         stamp = changed[type][name] ? changed[type][name] = new Date().getTime()
         hash = if index >= 0 then "&proxy_hash=#{stamp}" else "?proxy_hash=#{stamp}"
+        console.log hash
         request.url + hash
       else
         request.url
