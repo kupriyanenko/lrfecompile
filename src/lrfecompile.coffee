@@ -142,34 +142,37 @@ class ThemeWatcher extends Watcher
       @copyFile pathFile, toCopyFile 
       @updateChanged theme
 
-createProxy = (proxyport, liferayport) ->
+init = (proxyport, liferayport) ->
   ###
-  Create proxy server
+  Init script
   ###
+  portlets = new PortletWatcher {
+    root: './portlets'
+    tomcat: './webapps'
+  }
+  extensions = new ExtensionWatcher {
+    root: './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html'
+    tomcat: './webapps/ROOT/html'
+  }
+  themes = new ThemeWatcher {
+    root: './themes'
+    tomcat: './webapps'
+    silence: true
+  }
+
+  # Init watchers
+  portlets.init()
+  extensions.init()
+  themes.init()
+
+  # Get content lists
+  portletList = portlets.getPortletList()
+  themeList = themes.getThemeList()
+
   server = http.createServer (request, response) ->
-    # Create watchers
-    portlets = new PortletWatcher {
-      root: './portlets'
-      tomcat: './webapps'
-    }
-    extensions = new ExtensionWatcher {
-      root: './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html'
-      tomcat: './webapps/ROOT/html'
-    }
-    themes = new ThemeWatcher {
-      root: './themes'
-      tomcat: './webapps'
-      silence: true
-    }
-
-    # Init watchers
-    portlets.init()
-    extensions.init()
-    themes.init()
-
-    portletList = portlets.getPortletList()
-    themeList = themes.getThemeList()
-
+    ###
+    Create proxy server
+    ###
     getType = (url) ->
       ### Get file type (portlet, theme, extension) ###
       url = url.split '/'
@@ -229,4 +232,4 @@ createProxy = (proxyport, liferayport) ->
   
 
 # Init server
-createProxy options.proxyport, options.liferayport
+init options.proxyport, options.liferayport
