@@ -32,16 +32,20 @@ class Watcher
 
   copyFile: (oldFile, newFile) ->
     ### Copy file from old directory to new derictory ###
-    printName = newFile
-    newFile = fs.createWriteStream newFile
-    oldFile = fs.createReadStream oldFile
+    try
+      printName = newFile
+      newFile = fs.createWriteStream newFile
+      oldFile = fs.createReadStream oldFile
 
-    oldFile.addListener "data", (chunk) ->
-      newFile.write chunk
+      oldFile.addListener "data", (chunk) ->
+        newFile.write chunk
 
-    oldFile.addListener "close", =>
-      newFile.end()
-      console.log 'update', printName
+      oldFile.addListener "close", =>
+        newFile.end()
+        console.log 'update', printName
+    catch e
+      console.log "copy file failed!, error: #{e}"
+    
 
   updateChanged: (type, url) ->
     ### Update proxy cache for file ###
@@ -143,6 +147,26 @@ createProxy = (proxyport, liferayport) ->
   Create proxy server
   ###
   server = http.createServer (request, response) ->
+    # Create watchers
+    portlets = new PortletWatcher {
+      root: './portlets'
+      tomcat: './webapps'
+    }
+    extensions = new ExtensionWatcher {
+      root: './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html'
+      tomcat: './webapps/ROOT/html'
+    }
+    themes = new ThemeWatcher {
+      root: './themes'
+      tomcat: './webapps'
+      silence: true
+    }
+
+    # Init watchers
+    portlets.init()
+    extensions.init()
+    themes.init()
+
     portletList = portlets.getPortletList()
     themeList = themes.getThemeList()
 
@@ -200,25 +224,9 @@ createProxy = (proxyport, liferayport) ->
 
   server.listen proxyport
 
-###
-Init script 
-###
-portlets = new PortletWatcher {
-  root: './portlets'
-  tomcat: './webapps'
-}
-extensions = new ExtensionWatcher {
-  root: './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html'
-  tomcat: './webapps/ROOT/html'
-}
-themes = new ThemeWatcher {
-  root: './themes'
-  tomcat: './webapps'
-  silence: true
-}
+  server.on 'error', (err) ->
+    console.log 'there was an error:', err.message
+  
 
-portlets.init()
-extensions.init()
-themes.init()
-
+# Init server
 createProxy options.proxyport, options.liferayport
