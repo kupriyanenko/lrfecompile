@@ -90,8 +90,8 @@ class ThemeWatcher extends Watcher
   ###
   init: ->
     for theme in @getThemeList()
-      console.log "start watch folder #{path.join @rootDir, theme, pathTheme}"
       pathTheme = if theme isnt 'core' then 'docroot/_diffs' else ''
+      console.log "start watch folder #{path.join @rootDir, theme, pathTheme}"
       @createWatcher path.join(@rootDir, theme, pathTheme), theme
 
   updateChanged: (name) ->
@@ -177,8 +177,6 @@ createProxy = (proxyport, liferayport) ->
         request.url + hash
       else
         request.url
-
-    request.headers["Content-Type"] = "text/json"
 
     config =
       port: liferayport,
