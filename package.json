@@ -1,6 +1,6 @@
 {
   "name": "lrfecompile",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "tool for automatic precompile frontend on liferay",
   "preferGlobal": "true",
   "main": "index",
