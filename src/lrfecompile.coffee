@@ -230,7 +230,6 @@ init = (proxyport, liferayport) ->
 
   server.on 'error', (err) ->
     console.log 'there was an error:', err.message
-  
 
 # Init server
 init options.proxyport, options.liferayport
