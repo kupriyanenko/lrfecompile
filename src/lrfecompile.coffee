@@ -3,7 +3,7 @@ path = require 'path'
 http = require 'http'
 
 options = require 'commander'
-watchTree = require('fs-watch-tree').watchTree
+watcher = require '../modules/watcher'
 
 options
   .version('0.0.1')
@@ -58,18 +58,19 @@ class PortletWatcher extends Watcher
   ###
   init: ->
     for portlet in @getPortletList()
-      watchTree path.join(@rootDir, portlet, 'docroot'), {exclude: ['WEB-INF']}, (event) =>
+      watcher.watchTree(path.join(@rootDir, portlet, 'docroot'), (event, filename) =>
         sep = if path.sep is '\\' then '\\\\' else path.sep
         
         regexName = new RegExp "^(.*?)portlets#{sep}(.*?)#{sep}(.*?)$", 'gi'
-        portletName = path.dirname(event.name).replace(regexName, '$2')
+        portletName = path.dirname(filename).replace(regexName, '$2')
         regexPath = new RegExp "^(.*?)portlets#{sep}#{portletName}#{sep}docroot#{sep}(.*?)$", 'gi'
-        folderPath = path.dirname(event.name).replace(regexPath, '$2')
+        folderPath = path.dirname(filename).replace(regexPath, '$2')
 
-        toCopyFile = path.join @toCopyDir, portletName, folderPath, path.basename(event.name)
+        toCopyFile = path.join @toCopyDir, portletName, folderPath, path.basename(filename)
 
-        @copyFile event.name, toCopyFile
-        @updateChanged 'portlet', event.name
+        @copyFile filename, toCopyFile
+        @updateChanged 'portlet', filename
+      {excludeFolder: ['WEB-INF']})
 
   getPortletList: ->
     ### Get list with portlets name ###
@@ -80,13 +81,13 @@ class ExtensionWatcher extends Watcher
   Watch changes files in extensions
   ###
   init: ->
-    watchTree @rootDir, (event) =>
+    watcher.watchTree @rootDir, (event, filename) =>
       regexPath = new RegExp '^(.*?)html(.*?)$', 'gi'
-      folderPath = event.name.replace regexPath, '$2'
+      folderPath = filename.replace regexPath, '$2'
       toCopyFile = path.join @toCopyDir, folderPath
 
-      @copyFile event.name, toCopyFile
-      @updateChanged 'extension', event.name
+      @copyFile filename, toCopyFile
+      @updateChanged 'extension', filename
 
 class ThemeWatcher extends Watcher
   ###
@@ -108,15 +109,15 @@ class ThemeWatcher extends Watcher
 
   createWatcher: (root, theme) ->
     ### Create watcher for theme ###
-    watchTree root, (event) =>
-      if path.extname(event.name) in ['.css', '.scss']
+    watcher.watchTree root, (event, filename) =>
+      if path.extname(filename) in ['.css', '.scss']
         folder = 'css'
-      else if path.extname(event.name) in ['.js', '.json']
+      else if path.extname(filename) in ['.js', '.json']
         folder = 'js'
-      else if path.extname(event.name) in ['.vm']
+      else if path.extname(filename) in ['.vm']
         folder = 'templates'
 
-      @copyToThemes event.name, folder, theme if folder
+      @copyToThemes filename, folder, theme if folder
 
   copyToThemes: (pathFile, folder, theme) ->
     ### Copy file to themes ###
