@@ -1,6 +1,6 @@
 {
   "name": "lrfecompile",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "tool for automatic precompile frontend on liferay",
   "preferGlobal": "true",
   "main": "index",
@@ -26,7 +26,8 @@
     "url": "https://github.com/kupriyanenko/lrfecompile.git"
   },
   "dependencies": {
-    "commander": "1.0.x"
+    "commander": "1.0.x",
+    "watch": ">= 0.5.x"
   },
   "devDependencies": {
     "coffee-script": ">= 1.3.1"

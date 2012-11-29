@@ -6,7 +6,7 @@ options = require 'commander'
 watch = require 'watch'
 
 options
-  .version('0.0.2')
+  .version('0.0.3')
   .option('-t, --tomcat <n>', 'tomcat root folder')
   .option('-r, --root <n>', 'plugins root folder, defaul .', '.')
   .option('-l, --liferayport <n>', 'liferay port, defaul 8080', 8080)
