@@ -3,7 +3,7 @@ path = require 'path'
 http = require 'http'
 
 options = require 'commander'
-watcher = require '../modules/watcher'
+watch = require 'watch'
 
 options
   .version('0.0.2')
@@ -45,7 +45,19 @@ class Watcher
         console.log 'update', printName
     catch e
       console.log "copy file failed!, error: #{e}"
-    
+
+  watchTree: (root, callback) ->
+    ### Watch tree files ###
+    watch.watchTree root, (f, curr, prev) ->
+      if typeof f is "object" and prev is null and curr is null
+        # Finished walking the tree
+      else if prev is null
+        # f is a new file
+      else if curr.nlink is 0
+        # f was removed
+      else
+        # f was changed
+        callback.call this, f, curr, prev
 
   updateChanged: (type, url) ->
     ### Update proxy cache for file ###
@@ -58,7 +70,7 @@ class PortletWatcher extends Watcher
   ###
   init: ->
     for portlet in @getPortletList()
-      watcher.watchTree(path.join(@rootDir, portlet, 'docroot'), (event, filename) =>
+      @watchTree path.join(@rootDir, portlet, 'docroot'), (filename, curr, prev) =>
         sep = if path.sep is '\\' then '\\\\' else path.sep
         
         regexName = new RegExp "^(.*?)portlets#{sep}(.*?)#{sep}(.*?)$", 'gi'
@@ -70,7 +82,6 @@ class PortletWatcher extends Watcher
 
         @copyFile filename, toCopyFile
         @updateChanged 'portlet', filename
-      {excludeFolder: ['WEB-INF']})
 
   getPortletList: ->
     ### Get list with portlets name ###
@@ -81,7 +92,7 @@ class ExtensionWatcher extends Watcher
   Watch changes files in extensions
   ###
   init: ->
-    watcher.watchTree @rootDir, (event, filename) =>
+    @watchTree @rootDir, (filename, curr, prev) =>
       regexPath = new RegExp '^(.*?)html(.*?)$', 'gi'
       folderPath = filename.replace regexPath, '$2'
       toCopyFile = path.join @toCopyDir, folderPath
@@ -109,7 +120,7 @@ class ThemeWatcher extends Watcher
 
   createWatcher: (root, theme) ->
     ### Create watcher for theme ###
-    watcher.watchTree root, (event, filename) =>
+    @watchTree root, (filename, curr, prev) =>
       if path.extname(filename) in ['.css', '.scss']
         folder = 'css'
       else if path.extname(filename) in ['.js', '.json']
