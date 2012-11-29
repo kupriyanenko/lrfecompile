@@ -38,7 +38,7 @@ Options:
 
 Examples:
 
-  $ lrfecompile -t ../liferay-portal-6.1.1-ce-ga2/tomcat-7.0.27/ -p 9000
+  $ lrfecompile -t ../liferay-portal-6.1.1-ce-ga2/tomcat-7.0.27/ -l 80 -p 9000
 ```
 
 Then your portal will be available at the new port (proxyport), fox ex:
