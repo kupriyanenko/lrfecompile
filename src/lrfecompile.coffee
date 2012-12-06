@@ -48,7 +48,7 @@ class Watcher
 
   watchTree: (root, callback) ->
     ### Watch tree files ###
-    if not fs.fstatSync(root).isDirectory().isDirectory()
+    if not fs.fstatSync(root).isDirectory()
       return false
 
     watch.watchTree root, (f, curr, prev) ->
