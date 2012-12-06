@@ -48,6 +48,9 @@ class Watcher
 
   watchTree: (root, callback) ->
     ### Watch tree files ###
+    if not fs.fstatSync(root).isDirectory().isDirectory()
+      return false
+
     watch.watchTree root, (f, curr, prev) ->
       if typeof f is "object" and prev is null and curr is null
         # Finished walking the tree
