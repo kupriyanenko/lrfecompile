@@ -48,19 +48,23 @@ class Watcher
 
   watchTree: (root, callback) ->
     ### Watch tree files ###
-    if not fs.statSync(root).isDirectory()
-      return false
+    try
+      stats = fs.lstatSync root
 
-    watch.watchTree root, (f, curr, prev) ->
-      if typeof f is "object" and prev is null and curr is null
-        # Finished walking the tree
-      else if prev is null
-        # f is a new file
-      else if curr.nlink is 0
-        # f was removed
-      else
-        # f was changed
-        callback.call this, f, curr, prev
+       if stats.isDirectory()
+        watch.watchTree root, (f, curr, prev) ->
+          if typeof f is "object" and prev is null and curr is null
+            # Finished walking the tree
+          else if prev is null
+            # f is a new file
+          else if curr.nlink is 0
+            # f was removed
+          else
+            # f was changed
+            callback.call this, f, curr, prev
+    catch e
+      console.log "watch file failed!, error: #{e}"
+    
 
   updateChanged: (type, url) ->
     ### Update proxy cache for file ###
