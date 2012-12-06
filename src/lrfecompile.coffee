@@ -51,7 +51,7 @@ class Watcher
     try
       stats = fs.lstatSync root
 
-       if stats.isDirectory()
+      if stats.isDirectory()
         watch.watchTree root, (f, curr, prev) ->
           if typeof f is "object" and prev is null and curr is null
             # Finished walking the tree
