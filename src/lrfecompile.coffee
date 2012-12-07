@@ -6,7 +6,7 @@ options = require 'commander'
 watch = require 'watch'
 
 options
-  .version('0.0.3')
+  .version('0.0.4')
   .option('-t, --tomcat <n>', 'tomcat root folder')
   .option('-r, --root <n>', 'plugins root folder, defaul .', '.')
   .option('-l, --liferayport <n>', 'liferay port, defaul 8080', 8080)
@@ -33,16 +33,19 @@ class Watcher
   copyFile: (oldFile, newFile) ->
     ### Copy file from old directory to new derictory ###
     try
-      printName = newFile
-      newFile = fs.createWriteStream newFile
-      oldFile = fs.createReadStream oldFile
+      stats = fs.lstatSync newFile
 
-      oldFile.addListener "data", (chunk) ->
-        newFile.write chunk
+      if stats.isFile()
+        printName = newFile
+        newFile = fs.createWriteStream newFile
+        oldFile = fs.createReadStream oldFile
 
-      oldFile.addListener "close", =>
-        newFile.end()
-        console.log 'update', printName
+        oldFile.addListener "data", (chunk) ->
+          newFile.write chunk
+
+        oldFile.addListener "close", =>
+          newFile.end()
+          console.log 'update', printName
     catch e
       console.log "copy file failed!, error: #{e}"
 
@@ -64,7 +67,6 @@ class Watcher
             callback.call this, f, curr, prev
     catch e
       console.log "watch file failed!, error: #{e}"
-    
 
   updateChanged: (type, url) ->
     ### Update proxy cache for file ###
