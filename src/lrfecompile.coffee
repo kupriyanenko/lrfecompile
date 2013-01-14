@@ -11,6 +11,7 @@ options
   .option('-r, --root <n>', 'plugins root folder, defaul .', '.')
   .option('-l, --liferayport <n>', 'liferay port, defaul 8080', 8080)
   .option('-p, --proxyport <n>', 'proxy port, defaul 8000', 8000)
+  .option('-i, --interval <n>', 'update interval, defaul 5000', 5000)
   .parse(process.argv)
 
 options.help() if not options.tomcat
@@ -55,7 +56,9 @@ class Watcher
       stats = fs.lstatSync root
 
       if stats.isDirectory()
-        watch.watchTree root, (f, curr, prev) ->
+        watch.watchTree root, {
+          interval: options.interval
+        }, (f, curr, prev) ->
           if typeof f is "object" and prev is null and curr is null
             # Finished walking the tree
           else if prev is null
