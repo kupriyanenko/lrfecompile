@@ -33,6 +33,7 @@ Options:
   -V, --version          output the version number
   -t, --tomcat <n>       tomcat root folder
   -r, --root <n>         plugins root folder, defaul '.'
+  -i, --interval>        update interval files in ms, defaul 5000
   -l, --liferayport <n>  liferay port, defaul 8080
   -p, --proxyport <n>    proxy port, defaul 8000
 
