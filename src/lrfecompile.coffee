@@ -136,7 +136,8 @@ class ThemeWatcher extends Watcher
       if path.extname(filename) in ['.css', '.scss']
         folder = 'css'
       else if path.extname(filename) in ['.js', '.json']
-        folder = 'js'
+        regexName = new RegExp "^(.*?)_diffs(.*?)$", 'gi'
+        folder = path.dirname(filename).replace(regexName, '$2')
       else if path.extname(filename) in ['.vm']
         folder = 'templates'
 
