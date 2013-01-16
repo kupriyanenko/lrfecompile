@@ -135,7 +135,7 @@ class ThemeWatcher extends Watcher
     @watchTree root, (filename, curr, prev) =>
       if path.extname(filename) in ['.css', '.scss']
         folder = 'css'
-      else if path.extname(filename) in ['.js', '.json']
+      else if path.extname(filename) in ['.js', '.json', '.html']
         regexName = new RegExp "^(.*?)_diffs(.*?)$", 'gi'
         folder = path.dirname(filename).replace(regexName, '$2')
       else if path.extname(filename) in ['.vm']
