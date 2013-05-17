@@ -2,19 +2,7 @@ fs = require 'fs'
 path = require 'path'
 http = require 'http'
 
-options = require 'commander'
 watch = require 'watch'
-
-options
-  .version('0.0.5')
-  .option('-t, --tomcat <n>', 'tomcat root folder')
-  .option('-r, --root <n>', 'plugins root folder, defaul .', '.')
-  .option('-l, --liferayport <n>', 'liferay port, defaul 8080', 8080)
-  .option('-p, --proxyport <n>', 'proxy port, defaul 8000', 8000)
-  .option('-i, --interval <n>', 'update interval, defaul 5000', 5000)
-  .parse(process.argv)
-
-options.help() if not options.tomcat
 
 changed =
   theme: {}
@@ -25,9 +13,10 @@ class Watcher
   ###
   Watcher base class
   ###
-  constructor: (config) ->
+  constructor: (config, options) ->
     @rootDir = path.join options.root, config.root
     @toCopyDir = path.join options.tomcat, config.tomcat
+    @options = options;
 
     console.log "start watch folder #{@rootDir}" if not config.silence
 
@@ -57,7 +46,7 @@ class Watcher
 
       if stats.isDirectory()
         watch.watchTree root, {
-          interval: options.interval
+          interval: @options.interval
         }, (f, curr, prev) ->
           if typeof f is "object" and prev is null and curr is null
             # Finished walking the tree
@@ -167,23 +156,23 @@ class ThemeWatcher extends Watcher
       @copyFile pathFile, toCopyFile 
       @updateChanged theme
 
-init = (proxyport, liferayport) ->
+init = (options) ->
   ###
   Init script
   ###
   portlets = new PortletWatcher {
     root: './portlets'
     tomcat: './webapps'
-  }
+  }, options
   extensions = new ExtensionWatcher {
     root: './ext/platform-ext/docroot/WEB-INF/ext-web/docroot/html'
     tomcat: './webapps/ROOT/html'
-  }
+  }, options
   themes = new ThemeWatcher {
     root: './themes'
     tomcat: './webapps'
     silence: true
-  }
+  }, options
 
   # Init watchers
   portlets.init()
@@ -231,7 +220,7 @@ init = (proxyport, liferayport) ->
         request.url
 
     config =
-      port: liferayport,
+      port: options.liferayport,
       host: request.host,
       method: request.method,
       path: getPath(),
@@ -250,10 +239,10 @@ init = (proxyport, liferayport) ->
     request.on 'end', ->
       proxy.end()
 
-  server.listen proxyport
+  server.listen options.proxyport
 
   server.on 'error', (err) ->
     console.log 'there was an error:', err.message
 
-# Init server
-init options.proxyport, options.liferayport
+
+module.exports = init
