@@ -156,7 +156,10 @@ class ThemeWatcher extends Watcher
       @copyFile pathFile, toCopyFile 
       @updateChanged theme
 
-init = (options) ->
+
+### Exports ###
+
+module.exports = (options) ->
   ###
   Init script
   ###
@@ -243,6 +246,3 @@ init = (options) ->
 
   server.on 'error', (err) ->
     console.log 'there was an error:', err.message
-
-
-module.exports = init
