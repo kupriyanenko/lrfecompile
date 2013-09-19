@@ -3,11 +3,15 @@ path = require 'path'
 http = require 'http'
 
 watch = require 'watch'
+moment = require 'moment'
 
 changed =
   theme: {}
   portlet: {}
   extension: {}
+
+log = () ->
+  console.log moment().format('[[]h:mm:ss YYYY-D-MM[]]'), [].join.call arguments, ' '
 
 class Watcher
   ###
@@ -18,7 +22,7 @@ class Watcher
     @toCopyDir = path.join options.tomcat, config.tomcat
     @options = options;
 
-    console.log "start watch folder #{@rootDir}" if not config.silence
+    log "start watch folder #{@rootDir}" if not config.silence
 
   copyFile: (oldFile, newFile) ->
     ### Copy file from old directory to new derictory ###
@@ -35,9 +39,9 @@ class Watcher
 
         oldFile.addListener "close", =>
           newFile.end()
-          console.log 'update', printName
+          log 'update', printName
     catch e
-      console.log "copy file failed!, error: #{e}"
+      log "copy file failed!, error: #{e}"
 
   watchTree: (root, callback) ->
     ### Watch tree files ###
@@ -58,7 +62,7 @@ class Watcher
             # f was changed
             callback.call this, f, curr, prev
     catch e
-      console.log "watch file failed!, error: #{e}"
+      log "watch file failed!, error: #{e}"
 
   updateChanged: (type, url) ->
     ### Update proxy cache for file ###
@@ -108,7 +112,7 @@ class ThemeWatcher extends Watcher
   init: ->
     for theme in @getThemeList()
       pathTheme = if theme isnt 'core' then 'docroot/_diffs' else ''
-      console.log "start watch folder #{path.join @rootDir, theme, pathTheme}"
+      log "start watch folder #{path.join @rootDir, theme, pathTheme}"
       @createWatcher path.join(@rootDir, theme, pathTheme), theme
 
   updateChanged: (name) ->
@@ -245,4 +249,4 @@ module.exports = (options) ->
   server.listen options.proxyport
 
   server.on 'error', (err) ->
-    console.log 'there was an error:', err.message
+    log 'there was an error:', err.message
