@@ -106,12 +106,13 @@ class ExtensionWatcher extends Watcher
       @updateChanged 'extension', filename
 
 class ThemeWatcher extends Watcher
+  specialThemes: ['core', 'common']
   ###
   Watch changes files in themes
   ###
   init: ->
     for theme in @getThemeList()
-      pathTheme = if theme isnt 'core' then 'docroot/_diffs' else ''
+      pathTheme = if theme in @specialThemes then '' else 'docroot/_diffs'
       log "start watch folder #{path.join @rootDir, theme, pathTheme}"
       @createWatcher path.join(@rootDir, theme, pathTheme), theme
 
@@ -122,6 +123,10 @@ class ThemeWatcher extends Watcher
   getThemeList: ->
     ### Get list with themes name ###
     theme for theme in fs.readdirSync @rootDir when fs.statSync(path.join @rootDir, theme).isDirectory()
+
+  getCommonThemeList: ->
+    ### Get list with themes name specified in --common option ###
+    @options.common or []
 
   createWatcher: (root, theme) ->
     ### Create watcher for theme ###
@@ -138,9 +143,10 @@ class ThemeWatcher extends Watcher
 
   copyToThemes: (pathFile, folder, theme) ->
     ### Copy file to themes ###
-    if theme is 'core'
-      for themeName in @getThemeList()
-        continue if themeName is 'core'
+    if theme in @specialThemes
+	    themeList = if theme is 'core' then @getThemeList() else @getCommonThemeList()
+	    for themeName in themeList
+        continue if themeName in @specialThemes
 
         if 'portlets' in pathFile.split path.sep
           toCopyFile = path.join @toCopyDir, themeName, folder, 'portlets', path.basename pathFile
