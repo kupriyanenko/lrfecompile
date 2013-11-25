@@ -5,7 +5,7 @@ var lrfecompile = require('../index');
 
 // Get options
 options
-  .version('0.0.7')
+  .version('0.0.8')
   .option('-t, --tomcat <n>', 'tomcat root folder')
   .option('-r, --root <n>', 'plugins root folder, defaults to .', '.')
   .option('-l, --liferayport <n>', 'liferay port, defaults to 8080', 8080)
